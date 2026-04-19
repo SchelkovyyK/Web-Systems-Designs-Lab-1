@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('status')->default('todo');
-            $table->integer('album_number');
+            $table->integer('album_number')->nullable();
+            $table->string('priority');
             $table->timestamps();
         });
     }
