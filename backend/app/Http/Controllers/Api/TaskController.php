@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Task;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class TaskController extends Controller
 {
+<<<<<<< HEAD
     public function index()
     {
         $tasks = Cache::remember('tasks.index', 60, function () {
@@ -19,12 +21,26 @@ class TaskController extends Controller
     }
 
     public function store(Request $request)
+=======
+    public function index(): JsonResponse
+    {
+        $tasks = Cache::remember('tasks.index', 60, function () {
+            return Task::query()->latest()->get();
+        });
+
+        return response()->json([
+            'items' => $tasks,
+        ]);
+    }
+
+    public function store(Request $request): JsonResponse
+>>>>>>> d3d75c5 (Project 4: add Redis caching and Docker deployment)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'nullable|string',
-            'album_number' => 'required|integer'
+            'title' => ['required', 'string', 'max:200'],
+            'description' => ['nullable', 'string'],
+            'status' => ['required', 'in:todo,doing,done'],
+            'priority' => ['required', 'in:low,medium,high'],
         ]);
 
         $task = Task::create($validated);
@@ -34,37 +50,53 @@ class TaskController extends Controller
         return response()->json($task, 201);
     }
 
+<<<<<<< HEAD
     public function show($id)
+=======
+    public function show(Task $task): JsonResponse
+>>>>>>> d3d75c5 (Project 4: add Redis caching and Docker deployment)
     {
-        $task = Task::findOrFail($id);
-
-        return response()->json($task, 200);
+        return response()->json($task);
     }
 
+<<<<<<< HEAD
     public function update(Request $request, $id)
+=======
+    public function update(Request $request, Task $task): JsonResponse
+>>>>>>> d3d75c5 (Project 4: add Redis caching and Docker deployment)
     {
-        $task = Task::findOrFail($id);
-
         $validated = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'nullable|string',
-            'album_number' => 'required|integer'
+            'title' => ['sometimes', 'string', 'max:200'],
+            'description' => ['nullable', 'string'],
+            'status' => ['sometimes', 'in:todo,doing,done'],
+            'priority' => ['sometimes', 'in:low,medium,high'],
         ]);
 
         $task->update($validated);
 
+<<<<<<< HEAD
         Cache::forget('tasks.index'); 
 
         return response()->json($task, 200);
     }
 
     public function destroy($id)
+=======
+        Cache::forget('tasks.index');
+
+        return response()->json($task);
+    }
+
+    public function destroy(Task $task): JsonResponse
+>>>>>>> d3d75c5 (Project 4: add Redis caching and Docker deployment)
     {
-        $task = Task::findOrFail($id);
         $task->delete();
 
+<<<<<<< HEAD
         Cache::forget('tasks.index'); 
+=======
+        Cache::forget('tasks.index');
+>>>>>>> d3d75c5 (Project 4: add Redis caching and Docker deployment)
 
         return response()->json(null, 204);
     }

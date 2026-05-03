@@ -1,10 +1,18 @@
 vendor
 node_modules
+<<<<<<< HEAD
 
+=======
+>>>>>>> d3d75c5 (Project 4: add Redis caching and Docker deployment)
 storage/logs
 storage/framework/cache
 storage/framework/sessions
 storage/framework/views
+<<<<<<< HEAD
 
 .git
 .env
+=======
+.git
+.env
+>>>>>>> d3d75c5 (Project 4: add Redis caching and Docker deployment)

@@ -16,8 +16,13 @@ return new class extends Migration
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('status')->default('todo');
+<<<<<<< HEAD
             $table->integer('album_number')->nullable();
             $table->string('priority');
+=======
+            $table->string('priority')->default('medium');
+            $table->integer('album_number');
+>>>>>>> d3d75c5 (Project 4: add Redis caching and Docker deployment)
             $table->timestamps();
         });
     }
