@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: wsd_taskboard
+      POSTGRES_USER: wsd
+      POSTGRES_PASSWORD: wsdpass
+    healthcheck:
+      # Змінено -U на wsd, щоб відповідати користувачу вище
+      test: ["CMD-SHELL", "pg_isready -U wsd -d wsd_taskboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      - APP_KEY=base64:8cV/k0MyY0gR7k7mPD7coT42E/mc1FLLDpt1RslQX7c=
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=wsd_taskboard # МАЄ збігатися з POSTGRES_DB
+      - DB_USERNAME=wsd          # МАЄ збігатися з POSTGRES_USER
+      - DB_PASSWORD=wsdpass      # МАЄ збігатися з POSTGRES_PASSWORD
+      - REDIS_HOST=redis
+      - CACHE_STORE=redis
+      - REDIS_CLIENT=predis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
