@@ -6,6 +6,7 @@ services:
       POSTGRES_USER: wsd
       POSTGRES_PASSWORD: wsdpass
     healthcheck:
+      # Змінено -U на wsd, щоб відповідати користувачу вище
       test: ["CMD-SHELL", "pg_isready -U wsd -d wsd_taskboard"]
       interval: 5s
       timeout: 5s
@@ -21,17 +22,14 @@ services:
 
   backend:
     build: ./backend
-    # Важливо: синхронізуємо локальну папку backend з папкою в контейнері
-    volumes:
-      - ./backend:/var/www/html
     environment:
       - APP_KEY=base64:8cV/k0MyY0gR7k7mPD7coT42E/mc1FLLDpt1RslQX7c=
       - DB_CONNECTION=pgsql
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_DATABASE=wsd_taskboard
-      - DB_USERNAME=wsd
-      - DB_PASSWORD=wsdpass
+      - DB_DATABASE=wsd_taskboard # МАЄ збігатися з POSTGRES_DB
+      - DB_USERNAME=wsd          # МАЄ збігатися з POSTGRES_USER
+      - DB_PASSWORD=wsdpass      # МАЄ збігатися з POSTGRES_PASSWORD
       - REDIS_HOST=redis
       - CACHE_STORE=redis
       - REDIS_CLIENT=predis
@@ -45,8 +43,5 @@ services:
     build: ./frontend
     ports:
       - "8080:80"
-    # Також додаємо volumes для фронтенду, щоб бачити зміни в JS/HTML без перезбірки
-    volumes:
-      - ./frontend:/usr/share/nginx/html
     depends_on:
       - backend

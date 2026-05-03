@@ -12,15 +12,13 @@ class TaskController extends Controller
 {
     public function index(): JsonResponse
     {
-        
         $tasks = Cache::remember('tasks.index', 60, function () {
             return Task::query()->latest()->get();
         });
 
-        
         return response()->json([
             'items' => $tasks,
-        ], 200);
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -33,6 +31,7 @@ class TaskController extends Controller
         ]);
 
         $task = Task::create($validated);
+
         Cache::forget('tasks.index');
 
         return response()->json($task, 201);
@@ -40,7 +39,7 @@ class TaskController extends Controller
 
     public function show(Task $task): JsonResponse
     {
-        return response()->json($task, 200);
+        return response()->json($task);
     }
 
     public function update(Request $request, Task $task): JsonResponse
@@ -53,14 +52,16 @@ class TaskController extends Controller
         ]);
 
         $task->update($validated);
+
         Cache::forget('tasks.index');
 
-        return response()->json($task, 200);
+        return response()->json($task);
     }
 
     public function destroy(Task $task): JsonResponse
     {
         $task->delete();
+
         Cache::forget('tasks.index');
 
         return response()->json(null, 204);
