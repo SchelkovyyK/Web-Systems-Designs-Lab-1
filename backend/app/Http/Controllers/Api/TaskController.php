@@ -4,68 +4,93 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Task;
+use App\Support\ApiError;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Validator;
 
 class TaskController extends Controller
 {
     public function index()
-    {
-        $tasks = Cache::remember('tasks.index', 60, function () {
-            return Task::query()->latest()->get();
-        });
+{
+    $tasks = Cache::store('redis')->remember('tasks.index', 60, function () {
+        return Task::query()->latest()->get();
+    });
 
-        return response()->json(['items' => $tasks], 200);
-    }
+    return response()->json(['items' => $tasks], 200);
+}
+
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'nullable|string',
-            'album_number' => 'required|integer'
+            'album_number' => 'required|integer',
+            'priority' => 'required|string'
         ]);
 
-        $task = Task::create($validated);
+        if ($validator->fails()) {
+            return ApiError::make($request, 422, "Validation failed: " . $validator->errors()->first());
+        }
+
+        $task = Task::create($validator->validated());
 
         Cache::forget('tasks.index');
 
         return response()->json($task, 201);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $task = Task::findOrFail($id);
-
-        return response()->json($task, 200);
+        try {
+            $task = Task::findOrFail($id);
+            return response()->json($task, 200);
+        } catch (ModelNotFoundException $e) {
+            return ApiError::make($request, 404, "Task with ID $id not found");
+        }
     }
 
     public function update(Request $request, $id)
     {
-        $task = Task::findOrFail($id);
+        try {
+            $task = Task::findOrFail($id);
 
-        $validated = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'nullable|string',
-            'album_number' => 'required|integer'
-        ]);
+            $validator = Validator::make($request->all(), [
+                'title' => 'sometimes|required|string|max:255',
+                'description' => 'nullable|string',
+                'status' => 'nullable|string',
+                'album_number' => 'required|integer',
+                'priority' => 'sometimes|required|string'
+            ]);
 
-        $task->update($validated);
+            if ($validator->fails()) {
+                return ApiError::make($request, 422, "Validation failed: " . $validator->errors()->first());
+            }
 
-        Cache::forget('tasks.index'); 
+            $task->update($validator->validated());
 
-        return response()->json($task, 200);
+            Cache::forget('tasks.index');
+
+            return response()->json($task, 200);
+        } catch (ModelNotFoundException $e) {
+            return ApiError::make($request, 404, "Task with ID $id not found");
+        }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $task = Task::findOrFail($id);
-        $task->delete();
+        try {
+            $task = Task::findOrFail($id);
+            $task->delete();
 
-        Cache::forget('tasks.index'); 
+            Cache::forget('tasks.index');
 
-        return response()->json(null, 204);
+            return response()->json(null, 204);
+        } catch (ModelNotFoundException $e) {
+            return ApiError::make($request, 404, "Task with ID $id not found");
+        }
     }
 }
