@@ -12,10 +12,10 @@ class TaskController extends Controller
     public function index()
     {
         $tasks = Cache::remember('tasks.index', 60, function () {
-            return Task::all();
+            return Task::query()->latest()->get();
         });
 
-        return response()->json($tasks, 200);
+        return response()->json(['items' => $tasks], 200);
     }
 
     public function store(Request $request)
