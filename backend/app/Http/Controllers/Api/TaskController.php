@@ -13,14 +13,13 @@ use Illuminate\Support\Facades\Validator;
 class TaskController extends Controller
 {
     public function index()
-{
-    $tasks = Cache::store('redis')->remember('tasks.index', 60, function () {
-        return Task::query()->latest()->get();
-    });
+    {
+        $tasks = Cache::store('redis')->remember('tasks.index', 60, function () {
+            return Task::query()->latest()->get();
+        });
 
-    return response()->json(['items' => $tasks], 200);
-}
-
+        return response()->json(['items' => $tasks], 200);
+    }
 
     public function store(Request $request)
     {
@@ -38,7 +37,7 @@ class TaskController extends Controller
 
         $task = Task::create($validator->validated());
 
-        Cache::forget('tasks.index');
+        Cache::store('redis')->forget('tasks.index');
 
         return response()->json($task, 201);
     }
@@ -72,7 +71,7 @@ class TaskController extends Controller
 
             $task->update($validator->validated());
 
-            Cache::forget('tasks.index');
+            Cache::store('redis')->forget('tasks.index');
 
             return response()->json($task, 200);
         } catch (ModelNotFoundException $e) {
@@ -86,7 +85,7 @@ class TaskController extends Controller
             $task = Task::findOrFail($id);
             $task->delete();
 
-            Cache::forget('tasks.index');
+            Cache::store('redis')->forget('tasks.index');
 
             return response()->json(null, 204);
         } catch (ModelNotFoundException $e) {
