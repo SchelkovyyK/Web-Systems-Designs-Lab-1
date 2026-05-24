@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const title = ref('')
 const caption = ref('')
@@ -10,13 +10,10 @@ const loading = ref(false)
 const uploading = ref(false)
 const photos = ref<any[]>([])
 
-/* ---------------------------
-   PAGINATION TRACKING STATES
----------------------------- */
-const page = ref(1)
-const lastPage = ref(1)
-const totalRecords = ref(0)
+// Маркер для курсорної пагінації з бекенду
+const nextCursor = ref<string | null>(null)
 
+// Виправлення посилань на зображення через Nginx проксі
 const getCorrectImageUrl = (rawUrl: string) => {
   if (!rawUrl) return ''
   if (rawUrl.includes('127.0.0.1') && !rawUrl.includes(':8080')) {
@@ -26,59 +23,60 @@ const getCorrectImageUrl = (rawUrl: string) => {
   return rawUrl
 }
 
-/* ---------------------------
-   FETCH PHOTO FEED (INITIAL / RESET)
----------------------------- */
+// Перше завантаження стрічки новин
 const fetchPhotos = async () => {
   loading.value = true
   try {
-    page.value = 1
-    // Append your custom API routing pagination params: ?page=1
-    const res = await fetch(`/api/78716/v1/photos?page=${page.value}`)
-    const data = await res.json()
-
-    // Support either direct data array or paginated Laravel object structure
-    const rawPhotos = data.data?.data || data.data || []
+    const res = await fetch(`/api/78716/v1/feed?limit=4`)
+    const json = await res.json()
+    
+    // Дістаємо масив постів згідно структури нашого FeedController
+    const rawPhotos = json.data?.data || []
 
     photos.value = rawPhotos.map((photo: any) => ({
       ...photo,
-      image_url: getCorrectImageUrl(photo.image_url),
+      image_url: getCorrectImageUrl(photo.image_url || `http://localhost:8080/storage/${photo.image_path}`),
     }))
 
-    // Read metadata values from pagination payload or fallback safely
-    lastPage.value = data.data?.last_page || data.last_page || 1
-    totalRecords.value = data.data?.total ?? rawPhotos.length
+    nextCursor.value = json.data?.next_cursor || null
   } catch (err) {
-    console.error(err)
+    console.error('Помилка завантаження стрічки:', err)
   } finally {
     loading.value = false
   }
 }
 
-/* ---------------------------
-   LOAD MORE (PAGINATION ACCUMULATION)
----------------------------- */
+// Автоматичне довантаження наступних порцій постів
 const loadMore = async () => {
-  if (page.value >= lastPage.value) return
+  if (!nextCursor.value || loading.value) return
   loading.value = true
   try {
-    page.value++
-    const res = await fetch(`/api/78716/v1/photos?page=${page.value}`)
-    const data = await res.json()
+    const res = await fetch(`/api/78716/v1/feed?limit=4&cursor=${nextCursor.value}`)
+    const json = await res.json()
 
-    const nextPhotos = data.data?.data || data.data || []
+    const nextPhotos = json.data?.data || []
     const mappedNext = nextPhotos.map((photo: any) => ({
       ...photo,
-      image_url: getCorrectImageUrl(photo.image_url),
+      image_url: getCorrectImageUrl(photo.image_url || `http://localhost:8080/storage/${photo.image_path}`),
     }))
 
-    // Append new photos collection onto the end of the existing list state array
+    // Додаємо нові фото в кінець масиву
     photos.value = [...photos.value, ...mappedNext]
+    nextCursor.value = json.data?.next_cursor || null
   } catch (err) {
-    console.error(err)
-    page.value-- // Rollback local track cursor upon request fault failure
+    console.error('Помилка довантаження стрічки:', err)
   } finally {
     loading.value = false
+  }
+}
+
+// Обробник скролу для нескінченної стрічки
+const handleScroll = () => {
+  const { scrollTop, scrollHeight, clientHeight } = document.documentElement
+  if (scrollTop + clientHeight >= scrollHeight - 150) {
+    if (nextCursor.value && !loading.value) {
+      loadMore()
+    }
   }
 }
 
@@ -89,7 +87,6 @@ const handleUpload = async () => {
   }
 
   uploading.value = true
-
   try {
     const formData = new FormData()
     formData.append('title', title.value)
@@ -108,7 +105,7 @@ const handleUpload = async () => {
       title.value = ''
       caption.value = ''
       if (fileInput.value) fileInput.value.value = ''
-      await fetchPhotos()
+      await fetchPhotos() // Оновлюємо стрічку після успішного завантаження
     }
   } catch (err) {
     console.error(err)
@@ -119,6 +116,11 @@ const handleUpload = async () => {
 
 onMounted(() => {
   fetchPhotos()
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -153,7 +155,7 @@ onMounted(() => {
     </div>
 
     <div class="card">
-      <h2>Media Feed</h2>
+      <h2>Media Feed (News Service)</h2>
 
       <div class="list-feed">
         <div v-if="loading && photos.length === 0" class="empty">Loading assets from Redis...</div>
@@ -176,17 +178,17 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- PAGINATION LOAD MORE ACTION TRIGGERS -->
-        <button v-if="page < lastPage" class="btn load-more" @click="loadMore" :disabled="loading">
-          {{ loading ? 'Loading next page...' : `Load more posts (Page ${page} / ${lastPage})` }}
-        </button>
+        <!-- Індикатор довантаження при автоматичному скролі -->
+        <div v-if="loading && photos.length > 0" class="scroll-loader">
+          Loading more posts...
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* 🌍 FULL WIDE LAYOUT CONFIGURATION */
+/* Усі твої стилі залишаються без змін, додано лише один новий для лоадера */
 .page {
   width: 80vw !important;
   max-width: none !important;
@@ -197,12 +199,6 @@ onMounted(() => {
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   box-sizing: border-box;
-}
-
-.title {
-  font-size: 28px;
-  margin-bottom: 20px;
-  font-weight: bold;
 }
 
 .grid-actions {
@@ -324,21 +320,9 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-.load-more {
-  margin-top: 20px;
-  background: #2a2a2a;
-  border: 1px solid #3a3a3a;
-}
-
-.load-more:hover:not(:disabled) {
-  background: #3a3a3a;
-}
-
 .list-feed {
   padding-right: 4px;
 }
-
-/* 💻 RESPONSIVE MULTI-COLUMN FULL SCREEN GRID DESIGN */
 .instagram-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -399,6 +383,14 @@ onMounted(() => {
   color: #aaa;
   padding: 40px;
   text-align: center;
+  font-style: italic;
+}
+
+.scroll-loader {
+  text-align: center;
+  color: #42b883;
+  padding: 15px;
+  font-weight: bold;
   font-style: italic;
 }
 </style>

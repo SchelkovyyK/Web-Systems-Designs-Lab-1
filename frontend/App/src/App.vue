@@ -12,6 +12,7 @@ import { RouterLink, RouterView } from 'vue-router'
           <RouterLink to="/about">About</RouterLink>
           <RouterLink to="/labs">Labs Endpoints</RouterLink>
           <RouterLink to="/photos">Instagram Module</RouterLink>
+          <RouterLink to="/feed">News Feed & Follows</RouterLink>
         </nav>
       </div>
     </header>
