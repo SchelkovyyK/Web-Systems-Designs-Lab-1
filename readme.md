@@ -135,3 +135,37 @@ Include screenshots of:
 - Interactive Vue 3 Frontend web app routing page (`/labs`) showing 50 paginated records from Katowice.
 - `redis-cli` active terminal view showing generated lookup hashes cached inside `SELECT 1`.
 - Terminal validation outputs tracking empty cache matrices after executing a `PUT` mutation command [INDEX].
+
+
+# Session 8 – Scalable Media Cloud & In-Memory Ingestion Module
+
+## Purpose of the module
+This module expands the core enterprise API with high-throughput unstructured data handling capabilities, mimicking an Instagram-style media ingestion pipeline. It introduces physical file streaming, binary asset storage optimization, advanced cursor pagination tracking, and multi-layered cache abstraction to isolate heavy computing loads from backend service routines.
+
+## Functional requirements
+- **Multi-Part File Ingestion:** Processes multi-part form data image attachments (`.jpg`, `.png`) up to 10MB using strict server-side framework input validators.
+- **Asynchronous Pipeline Emulation:** Persists media payloads instantaneously under an initial tracking state (`uploaded`) before transitioning records into a optimized state (`processed`).
+- **Media Asset Resolution Paths:** Automatically converts server storage disk routes into public web asset locations using isolated endpoint routers.
+- **Cursor Load-More Pagination:** Feeds front-end clients using sequential collection chunks, appending lists on-demand to limit initial network strain.
+
+## Non-Functional requirements
+- **Decoupled Architecture Boundary:** Completely bans storing heavy image byte blobs inside PostgreSQL tables to eliminate memory bloat, database connection pool exhaustion, and storage latency.
+- **Nginx Reverse Proxy Volume Pass-Through:** Configured Nginx to read and stream static uploaded files directly from a shared Docker host volume bridge (`/var/www/storage`), completely bypassing the PHP worker thread overhead.
+- **Page-State Memory Abstraction:** Utilizes isolated, key-value page strings directly inside **Redis Database 1** (`photos.index.page.{id}`) with a 60-second expiration countdown to cache paginated JSON feed layers.
+- **Hardware-Accelerated Client Views:** Employs hardware-assisted rendering optimizations (`loading="lazy"`, `decoding="async"`, `content-visibility: auto`) within the front-end rendering cycle to maintain low device performance overhead.
+
+## Decoupled Media Streaming Flow
+To optimize bandwidth usage and shield backend servers from heavy processing loops, media queries follow a zero-overhead data path:
+
+## Endpoints
+- `GET /api/78716/v1/photos` - Retrieve paginated lists of shared media assets (served from Redis memory keys).
+- `POST /api/78716/v1/photos` - Multi-part file ingest handler (clears all listing cache entries instantly).
+- `GET /api/78716/v1/photos/{id}` - Retrieve isolated single post item rows from memory.
+- `DELETE /api/78716/v1/photos/{id}` - Wipe out metadata references, remove physical files from host disks, and clean old cache maps.
+
+## Testing evidence
+Include screenshots of:
+- Postman `201 Created` file-upload form data request containing the `"processing_status": "processed"` flag.
+- Full-width dark mode responsive Vue 3 application view showing the scalable multi-column grid layout.
+- Terminal check running `redis-cli -n 1 KEYS *` outputting the string list keys (`photos.index.page.1`).
+- Terminal check running `redis-cli -n 1 TTL` demonstrating expiration countdown execution.
