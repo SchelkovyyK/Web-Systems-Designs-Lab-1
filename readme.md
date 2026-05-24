@@ -169,3 +169,36 @@ Include screenshots of:
 - Full-width dark mode responsive Vue 3 application view showing the scalable multi-column grid layout.
 - Terminal check running `redis-cli -n 1 KEYS *` outputting the string list keys (`photos.index.page.1`).
 - Terminal check running `redis-cli -n 1 TTL` demonstrating expiration countdown execution.
+
+# Session 9 – High-Performance Fan-Out Feed & Follower Cache Service
+
+## Purpose of the module
+This module elevates the scalable media engine into a full-scale social news feed service (mimicking Instagram/Twitter architecture). It introduces a relational subscriber graph, data aggregation pipelines, dynamic page-state memory abstraction via cursor pagination, and high-performance Redis cache key isolation to deliver sub-millisecond personalized timelines without overloading relational database clusters.
+
+## Functional requirements
+- **Social Graph Subscriptions:** Complete subscriber network endpoints allowing users to follow and unfollow creators under strict input rules (e.g., self-following blocking validations).
+- **Aggregated Personalized Timeline:** Computes a specialized social feed fetching media assets exclusively from the current user's followings, combined with their own uploads, ordered chronologically.
+- **Dynamic User Hint Engine:** Automates user lookup pipelines via an endpoint (`/users/hints`) to expose active database creator IDs for instant frontend interaction.
+- **Cursor Paginated Streaming:** Feeds front-end clients using sequence chunk markers (`limit=4`), preventing state duplication when loading more records dynamically.
+
+## Non-Functional requirements
+- **Fan-Out-on-Read Optimization:** Employs a Pull-Model aggregation database routine combined with Redis layer memory abstraction to compute timelines at runtime with ultra-low query execution latencies.
+- **Isolated Cursor Cache Serialization:** Leverages isolated, key-value storage mapping inside **Redis Database 1**, enforcing strict unique cache-key isolation by attaching encoded pagination pointers (`feed:{userId}:{limit}:{cursor}`) [INDEX].
+- **Atomic Cache Flushes:** Implements global data lifecycle hooks (`Cache::flush()`) triggered automatically whenever mutation states occur (`POST /follow`, `DELETE /follow`), wiping out stale timeline configurations.
+- **Virtual DOM Key Collision Defense:** Utilizes composite index identification arrays (`:key="${p.id}-${index}"`) inside Vue 3 templates to block rendering overlaps during memory-swapping intervals.
+
+## Decoupled Feed Pagination Path
+To isolate concurrent scroll-fetching events and eliminate heavy relational calculation overhead, lookups follow an adaptive cache routing loop:
+
+## Endpoints
+- `GET /api/78716/v1/feed` - Retrieve personalized, cursor-paginated timeline lists (served from dynamic Redis cache segments).
+- `POST /api/78716/v1/users/{id}/follow` - Subscribe to a target creator node (invalidates global cache maps immediately).
+- `DELETE /api/78716/v1/users/{id}/follow` - Terminate subscription link and wipe out computed memory allocations.
+- `GET /api/78716/v1/users/hints` - Scan and retrieve unique active creator identifiers available for routing.
+
+## Testing evidence
+Include screenshots of:
+- Postman or Browser developer tools tracking JSON payloads displaying structured `"next_cursor": "..."` strings alongside nested resource layers.
+- Vue 3 Front-end News Feed UI displaying the safety block message `✨ You have caught up with everything!` once the timeline payload returns `next_cursor: null`.
+- Terminal check running `docker compose exec redis redis-cli -n 1 KEYS "*feed*"` proving successful generation of dynamic isolated pagination cursor hashes inside Database 1.
+- Terminal check running `redis-cli -n 1 KEYS "*"` demonstrating empty or modified indices right after hitting the `➕ Follow` / `❌ Unfollow` trigger commands.
