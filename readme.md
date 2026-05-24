@@ -89,3 +89,49 @@ Current endpoints:
 - GET /r/{code}
 
 The module uses PostgreSQL for persistent storage, Redis for caching the list endpoint, and Base62 encoding for generating short codes from numeric database IDs.
+
+
+# Session 7 – Geographic Proximity Module
+
+## Purpose of the module
+This module expands the core API with spatial geolocation capabilities, letting users manage locations (restaurants) and execute high-performance spatial proximity query lookups around specific coordinate points using database-driven mathematics and advanced pagination routing.
+
+## Functional requirements
+- **Data Ingestion:** Automatically streams and syncs data from external geographic sources (OpenStreetMap Overpass API) [INDEX] with built-in hardcoded local package fallbacks.
+- **RESTful CRUD Operations:** Complete data management endpoints bound strictly under the versioned student prefix namespace.
+- **Proximity Search:** Executes geometric searches matching filtered city boundaries, coordinates (`lat`/`lng`), and exact search radiuses.
+- **Data Pagination:** Enforces strict pagination boundaries (`->paginate(50)`) on backend payloads to handle highly populated data structures gracefully.
+
+## Non-functional requirements
+- **Database Math Inversion:** Shifts heavy Haversine spherical trigonometric operations (\(\sin\), \(\cos\), \(\arccos\)) entirely onto the PostgreSQL engine rather than evaluating arrays in PHP memory.
+- **Performance Indexing:** Employs explicit B-Tree database-level indexing on string coordinates (`city`) to keep search lookups highly performant.
+- **Isolated Redis Layering:** Configures sub-level indexing mapped directly onto **Redis Database 1** (`REDIS_CACHE_DB=1`) to isolate geographic transient lookups from primary project task queues [INDEX].
+- **Cache-Aside Dynamic Invalidation:** Flushes and invalidates spatial caches globally whenever location state data mutations (`POST`, `PUT`, `DELETE`) are processed [INDEX].
+
+## Haversine Query Core Architecture
+To identify locations within a custom radius while accounting for the curved spherical shape of the Earth, the PostgreSQL layer runs the raw Haversine calculation directly in milliseconds:
+
+```sql
+SELECT *, (6371 * acos(
+    cos(radians(target_lat)) * cos(radians(latitude)) *
+    cos(radians(longitude) - radians(target_lng)) +
+    sin(radians(target_lat)) * sin(radians(latitude))
+)) AS distance_km
+FROM restaurants
+WHERE city = 'katowice' AND distance_km <= target_radius
+```
+
+## Endpoints
+- `GET /api/78716/v1/restaurants` - Fetch all saved locations (JSON API).
+- `POST /api/78716/v1/restaurants` - Register a new spatial location.
+- `GET /api/78716/v1/restaurants/{id}` - Fetch details of a specific restaurant.
+- `PUT /api/78716/v1/restaurants/{id}` - Modify attributes of a location entry.
+- `DELETE /api/78716/v1/restaurants/{id}` - Destroy a resource node and flush Redis memory allocations [INDEX].
+- `GET /api/78716/v1/restaurants/nearby` - Execute proximity queries using parameters (`city`, `lat`, `lng`, `radius`, `page`).
+
+## Testing evidence
+Include screenshots of:
+- Successful dynamic database seeding execution logs (OpenStreetMap/Fallback response tracker).
+- Interactive Vue 3 Frontend web app routing page (`/labs`) showing 50 paginated records from Katowice.
+- `redis-cli` active terminal view showing generated lookup hashes cached inside `SELECT 1`.
+- Terminal validation outputs tracking empty cache matrices after executing a `PUT` mutation command [INDEX].

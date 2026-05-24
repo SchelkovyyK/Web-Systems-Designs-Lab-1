@@ -65,45 +65,55 @@ class RestaurantController extends Controller
     public function nearby(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'lat' => ['required', 'numeric', 'between:-90,90'],
-            'lng' => ['required', 'numeric', 'between:-180,180'],
-            'radius' => ['required', 'numeric', 'between:0.1,100'],
+            'city' => ['required', 'string'],
+            'lat' => ['required', 'numeric'],
+            'lng' => ['required', 'numeric'],
+            'radius' => ['required', 'numeric'],
         ]);
 
+        $city = strtolower($validated['city']);
         $lat = (float) $validated['lat'];
         $lng = (float) $validated['lng'];
         $radius = (float) $validated['radius'];
+        
+        // Отримуємо номер поточної сторінки (за замовчуванням 1)
+        $page = (int) $request->query('page', 1);
 
-        $cacheKey = 'nearby:' . $lat . ':' . $lng . ':' . $radius;
+        // Додаємо сторінку в ключ кешу Redis!
+        $cacheKey = "nearby:$city:$lat:$lng:$radius:page:$page";
 
-        $restaurants = Cache::remember($cacheKey, 60, function () use ($lat, $lng, $radius) {
+        $restaurantsPaginated = Cache::remember($cacheKey, 3600, function () use ($city, $lat, $lng, $radius) {
             return Restaurant::query()
-                ->get()
-                ->map(function (Restaurant $restaurant) use ($lat, $lng) {
-                    $restaurant->distance_km = $this->calculateDistance(
-                        $lat,
-                        $lng,
-                        (float) $restaurant->latitude,
-                        (float) $restaurant->longitude
-                    );
-                    return $restaurant;
-                })
-                ->filter(function (Restaurant $restaurant) use ($radius) {
-                    return $restaurant->distance_km <= $radius;
-                })
-                ->sortBy('distance_km')
-                ->values();
+                ->where('album_number', '78716')
+                ->where('city', $city)
+                ->selectRaw("
+                    id, name, city, latitude, longitude, category, rating, album_number, created_at, updated_at,
+                    (
+                        6371 * acos(
+                            cos(radians(?)) *
+                            cos(radians(latitude)) *
+                            cos(radians(longitude) - radians(?)) +
+                            sin(radians(?)) *
+                            sin(radians(latitude))
+                        )
+                    ) AS distance_km
+                ", [$lat, $lng, $lat])
+                ->whereRaw("
+                    (
+                        6371 * acos(
+                            cos(radians(?)) *
+                            cos(radians(latitude)) *
+                            cos(radians(longitude) - radians(?)) +
+                            sin(radians(?)) *
+                            sin(radians(latitude))
+                        )
+                    ) <= ?
+                ", [$lat, $lng, $lat, $radius])
+                ->orderBy('distance_km')
+                ->paginate(50); // Замінено ліміт на пагінацію (по 50 на сторінку)
         });
 
-        return response()->json([
-            'query' => [
-                'latitude' => $lat,
-                'longitude' => $lng,
-                'radius_km' => $radius,
-            ],
-            'count' => $restaurants->count(),
-            'data' => $restaurants,
-        ], 200);
+        return response()->json($restaurantsPaginated, 200);
     }
 
     private function calculateDistance(float $lat1, float $lng1, float $lat2, float $lng2): float

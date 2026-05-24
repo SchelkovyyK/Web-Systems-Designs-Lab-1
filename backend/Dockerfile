@@ -1,22 +1,26 @@
 FROM php:8.4-cli-bookworm
 
+# system dependencies (IMPORTANT FIX)
 RUN apt-get update && apt-get install -y \
-    git curl libpng-dev libonig-dev libxml2-dev zip unzip libpq-dev
+    git curl zip unzip \
+    libpq-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd
+# PHP extensions
+RUN docker-php-ext-install \
+    pdo \
+    pdo_pgsql \
+    mbstring \
+    zip \
+    xml
 
+# Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
-
-# Copy full project FIRST (IMPORTANT FIX)
-COPY . .
-
-# Install dependencies WITHOUT triggering Laravel scripts
-RUN composer install --no-interaction --prefer-dist --no-scripts --optimize-autoloader
-
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 8000
 
