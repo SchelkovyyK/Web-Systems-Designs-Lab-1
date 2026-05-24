@@ -19,9 +19,6 @@ const resultCount = ref<number | null>(null)
 const page = ref(1)
 const lastPage = ref(1)
 
-/* ---------------------------
-   MAIN SEARCH (RESET)
----------------------------- */
 const testNearbyRestaurants = async () => {
   loading.value = true
 
@@ -32,7 +29,7 @@ const testNearbyRestaurants = async () => {
     const c = selectedCity.value
 
     const res = await fetch(
-      `/api/78716/v1/restaurants/nearby?city=${c.key}&lat=${c.lat}&lng=${c.lng}&radius=${radius.value}&page=1`
+      `/api/78716/v1/restaurants/nearby?city=${c.key}&lat=${c.lat}&lng=${c.lng}&radius=${radius.value}&page=1`,
     )
 
     const data = await res.json()
@@ -50,9 +47,6 @@ const testNearbyRestaurants = async () => {
   }
 }
 
-/* ---------------------------
-   LOAD MORE (PAGINATION)
----------------------------- */
 const loadMore = async () => {
   if (page.value >= lastPage.value) return
 
@@ -64,7 +58,7 @@ const loadMore = async () => {
     const c = selectedCity.value
 
     const res = await fetch(
-      `/api/78716/v1/restaurants/nearby?city=${c.key}&lat=${c.lat}&lng=${c.lng}&radius=${radius.value}&page=${page.value}`
+      `/api/78716/v1/restaurants/nearby?city=${c.key}&lat=${c.lat}&lng=${c.lng}&radius=${radius.value}&page=${page.value}`,
     )
 
     const data = await res.json()
@@ -87,9 +81,9 @@ const loadMore = async () => {
 
     <!-- TOP LINKS -->
     <div class="grid">
-      <a class="card link" href="/api/health" target="_blank">🟢 Health</a>
-      <a class="card link" href="/api/78716/v1/restaurants" target="_blank">🍽 Restaurants</a>
-      <a class="card link" href="/api/78716/v1/tasks" target="_blank">📋 Tasks</a>
+      <a class="card link" href="/api/health" target="_blank">Health</a>
+      <a class="card link" href="/api/78716/v1/restaurants" target="_blank">Restaurants</a>
+      <a class="card link" href="/api/78716/v1/tasks" target="_blank">Tasks</a>
     </div>
 
     <!-- SEARCH -->
@@ -120,24 +114,16 @@ const loadMore = async () => {
       <h2>Results</h2>
 
       <div class="list">
-        <div v-if="lastData.length === 0" class="empty">
-          No data yet
-        </div>
+        <div v-if="lastData.length === 0" class="empty">No data yet</div>
 
         <div v-for="r in lastData" :key="r.id" class="item">
           <div class="name">{{ r.name }}</div>
-          <div class="meta">
-            {{ r.category }} • {{ Number(r.distance_km).toFixed(2) }} km
-          </div>
+          <div class="meta">{{ r.category }} • {{ Number(r.distance_km).toFixed(2) }} km</div>
         </div>
       </div>
 
       <!-- LOAD MORE -->
-      <button
-        v-if="page < lastPage"
-        class="btn load-more"
-        @click="loadMore"
-      >
+      <button v-if="page < lastPage" class="btn load-more" @click="loadMore">
         Load more (page {{ page }}/{{ lastPage }})
       </button>
     </div>
@@ -146,9 +132,9 @@ const loadMore = async () => {
 
 <style scoped>
 .page {
-  max-width: 900px;
-  margin: auto;
-  padding: 20px;
+ 
+  margin: 0 auto; /* Center alignment */
+  
   background: #0f0f0f;
   min-height: 100vh;
   color: white;
@@ -157,7 +143,7 @@ const loadMore = async () => {
 
 .title {
   font-size: 28px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 /* LINKS */
@@ -179,8 +165,8 @@ const loadMore = async () => {
   background: #1a1a1a;
   padding: 16px;
   border-radius: 12px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  margin-bottom: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 /* ROW */
@@ -263,5 +249,12 @@ input {
 
 .list::-webkit-scrollbar-thumb:hover {
   background: #2f8f6a;
+}
+/* 💻 Shift view content block right on desktops to clear the fixed sidebar space */
+@media (min-width: 1024px) {
+  .page {
+    margin-left: 320px !important;
+    max-width: calc(100% - 340px) !important;
+  }
 }
 </style>

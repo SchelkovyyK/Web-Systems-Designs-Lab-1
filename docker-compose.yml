@@ -47,6 +47,7 @@ services:
 
     volumes:
       - ./frontend/App/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./backend:/var/www
 
     depends_on:
       - frontend

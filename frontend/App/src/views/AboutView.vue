@@ -37,7 +37,7 @@
       @swiper="setThumbsSwiper"
       :loop="true"
       :spaceBetween="10"
-      :slidesPerView="3"
+      :slidesPerView="4"
       :freeMode="true"
       :watchSlidesProgress="true"
       :modules="modules"
@@ -106,7 +106,7 @@ export default {
 <style>
 .about {
   width: 50vw;
-  height: 90vh;
+  height: 100vh;
 
   display: flex;
   flex-direction: column;
