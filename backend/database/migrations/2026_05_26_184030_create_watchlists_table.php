@@ -8,18 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('follows', function (Blueprint $table) {
+        Schema::create('watchlists', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('follower_id');
-            $table->unsignedBigInteger('followed_id');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('video_id');
             $table->timestamps();
-            $table->unique(['follower_id', 'followed_id']);
-        });
 
+            $table->unique(['user_id', 'video_id']); 
+        });
     }
+
 
     public function down(): void
     {
-        Schema::dropIfExists('follows');
+        Schema::dropIfExists('watchlists');
     }
 };

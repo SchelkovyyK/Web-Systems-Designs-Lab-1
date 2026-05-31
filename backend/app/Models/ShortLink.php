@@ -6,9 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class ShortLink extends Model
 {
-    /**
-     * Поля, які дозволено масово заповнювати (Mass Assignment).
-     */
     protected $fillable = [
         'original_url',
         'short_code',

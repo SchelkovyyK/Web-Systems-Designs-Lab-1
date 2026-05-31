@@ -19,7 +19,6 @@ class FeedController extends Controller
 
     $cacheKey = 'feed:' . $userId . ':' . $limit . ':' . $cursor;
 
-    // Кешуємо тільки масив згенерованих даних
     $cachedData = Cache::remember($cacheKey, 60, function () use ($userId, $limit) {
         $followedIds = Follow::query()
             ->where('follower_id', $userId)
@@ -29,13 +28,11 @@ class FeedController extends Controller
 
         $followedIds[] = (string) $userId;
 
-        // Отримуємо пагінатор
         $feedPaginator = Photo::query()
             ->whereIn('album_number', $followedIds)
             ->orderByDesc('created_at')
             ->cursorPaginate($limit);
 
-        // Перетворюємо його на чистий масив, який Redis 100% зможе зберегти
         return [
             'items' => $feedPaginator->items(),
             'next_cursor' => $feedPaginator->nextCursor()?->encode(),

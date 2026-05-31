@@ -67,10 +67,8 @@
 </template>
 <script>
 import { ref } from 'vue'
-// Import Swiper Vue.js components
 import { Swiper, SwiperSlide } from 'swiper/vue'
 
-// Import Swiper styles
 import 'swiper/css'
 
 import 'swiper/css/free-mode'
@@ -79,7 +77,6 @@ import 'swiper/css/thumbs'
 
 import '../assets/main.css'
 
-// import required modules
 import { FreeMode, Navigation, Thumbs } from 'swiper/modules'
 
 export default {

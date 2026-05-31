@@ -16,7 +16,6 @@ const searchId = ref('')
 const followMessage = ref('')
 const followError = ref(false)
 
-// New state for system hints
 const existingUsers = ref<string[]>([])
 const loadingHints = ref(false)
 
@@ -36,7 +35,6 @@ const fetchPhotos = async () => {
     const res = await fetch(`/api/78716/v1/feed?limit=4`)
     const json = await res.json()
 
-    // Спускаємося всередину відповіді Laravel cursorPaginate (json.data)
     const paginationContext = json.data
     const rawPhotos = paginationContext?.data || []
 
@@ -46,8 +44,6 @@ const fetchPhotos = async () => {
         photo.image_url || `http://localhost:8080/storage/${photo.image_path}`,
       ),
     }))
-
-    // Зберігаємо маркер наступної сторінки
     nextCursor.value = paginationContext?.next_cursor || null
   } catch (err) {
     console.error(err)
@@ -57,7 +53,6 @@ const fetchPhotos = async () => {
 }
 
 const loadMore = async () => {
-  // КРИТИЧНИЙ ЗАХИСТ: якщо курсору немає або вже йде завантаження — зупиняємо роботу
   if (!nextCursor.value || loading.value) return
 
   loading.value = true
@@ -68,7 +63,6 @@ const loadMore = async () => {
     const paginationContext = json.data
     const nextPhotos = paginationContext?.data || []
 
-    // Якщо сервер повернув порожній масив — примусово зупиняємо пагінацію
     if (nextPhotos.length === 0) {
       nextCursor.value = null
       return
@@ -80,11 +74,8 @@ const loadMore = async () => {
         photo.image_url || `http://localhost:8080/storage/${photo.image_path}`,
       ),
     }))
-
-    // Додаємо нові фотки до існуючих
     photos.value = [...photos.value, ...mappedNext]
 
-    // Оновлюємо курсор значенням наступної сторінки
     nextCursor.value = paginationContext?.next_cursor || null
   } catch (err) {
     console.error(err)
@@ -92,8 +83,6 @@ const loadMore = async () => {
     loading.value = false
   }
 }
-
-// Fetch hint tokens from the new endpoint
 const fetchUserHints = async () => {
   loadingHints.value = true
   try {
@@ -183,7 +172,7 @@ const handleUpload = async () => {
       caption.value = ''
       if (fileInput.value) fileInput.value.value = ''
       await fetchPhotos()
-      await fetchUserHints() // Refresh hints list after a new upload
+      await fetchUserHints() 
     }
   } catch (err) {
     console.error(err)
@@ -191,8 +180,6 @@ const handleUpload = async () => {
     uploading.value = false
   }
 }
-
-// Watch active tab to load hints when opening the search page
 watch(currentTab, (newTab) => {
   if (newTab === 'users') {
     fetchUserHints()
@@ -222,8 +209,6 @@ onUnmounted(() => {
         🔍 Find & Follow
       </button>
     </div>
-
-    <!-- TAB 1: NEWS FEED -->
     <div v-if="currentTab === 'feed'" class="tab-content">
       <div class="grid-actions">
         <a class="feed-card link" href="/api/health" target="_blank">🟢 Health</a>
@@ -267,7 +252,6 @@ onUnmounted(() => {
           </div>
 
           <div v-else class="instagram-grid">
-            <!-- Комбінуємо ID та індекс для унікальності ключів у Vue -->
             <div v-for="(p, index) in photos" :key="`${p.id}-${index}`" class="insta-card">
               <img
                 :src="p.image_url"
@@ -283,8 +267,6 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
-          
-          <!-- Блок індикаторів стану пагінації -->
           <div v-if="loading && photos.length > 0" class="scroll-loader">
             ⏳ Loading more posts...
           </div>
@@ -294,8 +276,6 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-
-    <!-- TAB 2: FIND & FOLLOW -->
     <div v-if="currentTab === 'users'" class="tab-content">
       <div class="feed-card">
         <h2>Manage Subscriptions by Album Number</h2>
@@ -306,8 +286,6 @@ onUnmounted(() => {
             placeholder="Enter student album number (e.g., 99999)"
             class="input-field"
           />
-
-          <!-- HINTS BLOCK -->
           <div class="hints-section">
             <span class="hints-label">Active Creators in Database:</span>
             <div v-if="loadingHints" class="hints-loading">Scanning database...</div>

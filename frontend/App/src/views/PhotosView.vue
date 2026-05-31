@@ -10,10 +10,8 @@ const loading = ref(false)
 const uploading = ref(false)
 const photos = ref<any[]>([])
 
-// Маркер для курсорної пагінації з бекенду
 const nextCursor = ref<string | null>(null)
 
-// Виправлення посилань на зображення через Nginx проксі
 const getCorrectImageUrl = (rawUrl: string) => {
   if (!rawUrl) return ''
   if (rawUrl.includes('127.0.0.1') && !rawUrl.includes(':8080')) {
@@ -22,15 +20,11 @@ const getCorrectImageUrl = (rawUrl: string) => {
   }
   return rawUrl
 }
-
-// Перше завантаження стрічки новин
 const fetchPhotos = async () => {
   loading.value = true
   try {
     const res = await fetch(`/api/78716/v1/feed?limit=4`)
     const json = await res.json()
-    
-    // Дістаємо масив постів згідно структури нашого FeedController
     const rawPhotos = json.data?.data || []
 
     photos.value = rawPhotos.map((photo: any) => ({
@@ -45,8 +39,6 @@ const fetchPhotos = async () => {
     loading.value = false
   }
 }
-
-// Автоматичне довантаження наступних порцій постів
 const loadMore = async () => {
   if (!nextCursor.value || loading.value) return
   loading.value = true
@@ -59,8 +51,6 @@ const loadMore = async () => {
       ...photo,
       image_url: getCorrectImageUrl(photo.image_url || `http://localhost:8080/storage/${photo.image_path}`),
     }))
-
-    // Додаємо нові фото в кінець масиву
     photos.value = [...photos.value, ...mappedNext]
     nextCursor.value = json.data?.next_cursor || null
   } catch (err) {
@@ -69,8 +59,6 @@ const loadMore = async () => {
     loading.value = false
   }
 }
-
-// Обробник скролу для нескінченної стрічки
 const handleScroll = () => {
   const { scrollTop, scrollHeight, clientHeight } = document.documentElement
   if (scrollTop + clientHeight >= scrollHeight - 150) {
@@ -105,7 +93,7 @@ const handleUpload = async () => {
       title.value = ''
       caption.value = ''
       if (fileInput.value) fileInput.value.value = ''
-      await fetchPhotos() // Оновлюємо стрічку після успішного завантаження
+      await fetchPhotos()
     }
   } catch (err) {
     console.error(err)
@@ -178,7 +166,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Індикатор довантаження при автоматичному скролі -->
         <div v-if="loading && photos.length > 0" class="scroll-loader">
           Loading more posts...
         </div>
@@ -188,7 +175,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* Усі твої стилі залишаються без змін, додано лише один новий для лоадера */
+
 .page {
   width: 80vw !important;
   max-width: none !important;

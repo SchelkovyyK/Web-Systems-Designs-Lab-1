@@ -13,6 +13,7 @@ import { RouterLink, RouterView } from 'vue-router'
           <RouterLink to="/labs">Labs Endpoints</RouterLink>
           <RouterLink to="/photos">Instagram Module</RouterLink>
           <RouterLink to="/feed">News Feed & Follows</RouterLink>
+          <RouterLink to="/netflix">Netflix Engine</RouterLink>
         </nav>
       </div>
     </header>
@@ -24,7 +25,6 @@ import { RouterLink, RouterView } from 'vue-router'
 </template>
 
 <style>
-/* 🌍 Global browser resets */
 #app {
   max-width: 100vw !important;
   margin: 0 !important;
@@ -97,8 +97,6 @@ body {
   width: 100%;
   box-sizing: border-box;
 }
-
-/* 💻 UNIVERSAL DESKTOP GRID EXECUTION */
 @media (min-width: 1024px) {
   .main-app-layout {
     flex-direction: row;
@@ -140,13 +138,11 @@ body {
   }
 
   .content-body {
-    margin-left: 280px; /* Space for fixed sidebar */
+    margin-left: 280px; 
     width: calc(100% - 280px);
     max-width: calc(100% - 280px);
     display: flex;
   }
-
-  /* 🛠️ UNIVERSAL FIX FOR ALL inner ".page" components */
   .content-body > div,
   .content-body .page {
     width: 100% !important;

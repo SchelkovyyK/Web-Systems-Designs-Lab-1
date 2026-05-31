@@ -9,6 +9,9 @@ use App\Http\Controllers\Api\PhotoController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\FeedController;
 
+use App\Http\Controllers\Api\VideoController;
+use App\Http\Controllers\Api\RecommendationController;
+use App\Http\Controllers\Api\WatchHistoryController;
 
 Route::get('/health', [HealthController::class, 'index']);
 
@@ -22,14 +25,19 @@ Route::prefix('78716/v1')->group(function () {
     Route::delete('users/{id}/follow', [FollowController::class, 'unfollow']);
     Route::get('feed', [FeedController::class, 'index']);
 
-    Route::get('users/hints', function () {
-    $albums = \App\Models\Photo::query()
-        ->whereNotNull('album_number')
-        ->where('album_number', '!=', '')
-        ->distinct()
-        ->pluck('album_number');
-        
-    return response()->json(['success' => true, 'data' => $albums]);
-});
-});
+    Route::apiResource('videos', VideoController::class)->only(['index', 'store', 'show', 'destroy']);
+    
+    Route::get('recommendations', [RecommendationController::class, 'index']);
+    Route::get('continue-watching', [WatchHistoryController::class, 'continueWatching']);
+    Route::post('watch-history', [WatchHistoryController::class, 'store']);
 
+    Route::get('users/hints', function () {
+        $albums = \App\Models\Photo::query()
+            ->whereNotNull('album_number')
+            ->where('album_number', '!=', '')
+            ->distinct()
+            ->pluck('album_number');
+            
+        return response()->json(['success' => true, 'data' => $albums]);
+    });
+});

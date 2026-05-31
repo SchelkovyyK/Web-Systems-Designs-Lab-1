@@ -29,6 +29,11 @@ const router = createRouter({
       name: 'feed',
       component: () => import('../views/FeedView.vue'), 
     },
+    {
+      path: '/netflix',
+      name: 'netflix',
+      component: () => import('../views/NetflixModule.vue'),
+    },
   ],
 })
 

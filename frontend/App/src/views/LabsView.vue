@@ -78,15 +78,11 @@ const loadMore = async () => {
 <template>
   <div class="page">
     <h1 class="title">Geo Restaurant System</h1>
-
-    <!-- TOP LINKS -->
     <div class="grid">
       <a class="card link" href="/api/health" target="_blank">Health</a>
       <a class="card link" href="/api/78716/v1/restaurants" target="_blank">Restaurants</a>
       <a class="card link" href="/api/78716/v1/tasks" target="_blank">Tasks</a>
     </div>
-
-    <!-- SEARCH -->
     <div class="card">
       <h2>Search</h2>
 
@@ -108,8 +104,6 @@ const loadMore = async () => {
         Found: <b>{{ resultCount }}</b> restaurants
       </div>
     </div>
-
-    <!-- RESULTS -->
     <div class="card">
       <h2>Results</h2>
 
@@ -121,8 +115,6 @@ const loadMore = async () => {
           <div class="meta">{{ r.category }} • {{ Number(r.distance_km).toFixed(2) }} km</div>
         </div>
       </div>
-
-      <!-- LOAD MORE -->
       <button v-if="page < lastPage" class="btn load-more" @click="loadMore">
         Load more (page {{ page }}/{{ lastPage }})
       </button>
@@ -133,7 +125,7 @@ const loadMore = async () => {
 <style scoped>
 .page {
  
-  margin: 0 auto; /* Center alignment */
+  margin: 0 auto; 
   
   background: #0f0f0f;
   min-height: 100vh;
@@ -145,8 +137,6 @@ const loadMore = async () => {
   font-size: 28px;
   margin-bottom: 10px;
 }
-
-/* LINKS */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -159,8 +149,6 @@ const loadMore = async () => {
   font-weight: bold;
   text-decoration: none;
 }
-
-/* CARD */
 .card {
   background: #1a1a1a;
   padding: 16px;
@@ -168,8 +156,6 @@ const loadMore = async () => {
   margin-bottom: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
-
-/* ROW */
 .row {
   display: flex;
   gap: 10px;
@@ -182,8 +168,6 @@ input {
   border-radius: 6px;
   border: none;
 }
-
-/* BUTTON */
 .btn {
   background: #42b883;
   border: none;
@@ -196,15 +180,11 @@ input {
 .btn:hover {
   background: #2f8f6a;
 }
-
-/* RESULTS LIST */
 .list {
   max-height: 200px;
   overflow-y: auto;
   padding-right: 6px;
 }
-
-/* ITEM */
 .item {
   padding: 10px;
   border-bottom: 1px solid #2a2a2a;
@@ -218,20 +198,14 @@ input {
   font-size: 12px;
   opacity: 0.7;
 }
-
-/* EMPTY */
 .empty {
   opacity: 0.6;
   padding: 10px;
 }
-
-/* LOAD MORE */
 .load-more {
   margin-top: 10px;
   width: 100%;
 }
-
-/* SCROLLBAR */
 .list::-webkit-scrollbar {
   width: 8px;
 }
@@ -250,7 +224,6 @@ input {
 .list::-webkit-scrollbar-thumb:hover {
   background: #2f8f6a;
 }
-/* 💻 Shift view content block right on desktops to clear the fixed sidebar space */
 @media (min-width: 1024px) {
   .page {
     margin-left: 320px !important;
